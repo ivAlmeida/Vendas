@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Vendas - Doces do Ivan</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; }
+        .card { background: #e8f4fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .valor { font-size: 2em; font-weight: bold; color: #27ae60; }
+        
+        /* Barra de Meta */
+        .progress-container { background: #eee; border-radius: 20px; height: 30px; width: 100%; margin: 10px 0; overflow: hidden; }
+        .progress-bar { background: #27ae60; height: 100%; width: 0%; transition: width 1s ease-in-out; }
+        
+        .stats { display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Controle de Vendas 💰</h1>
+
+    <div class="card">
+        <p>Total Arrecadado</p>
+        <div id="total-faturado" class="valor">R$ 0,00</div>
+        
+        <p>Progresso da Meta (R$ 1.000,00)</p>
+        <div class="progress-container">
+            <div id="barra" class="progress-bar"></div>
+        </div>
+        <div class="stats">
+            <span id="porcentagem">0%</span>
+            <span>R$ 1.000,00</span>
+        </div>
+    </div>
+
+    <h3>Últimas Vendas</h3>
+    <table id="tabela-vendas">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Doce</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // 1. CONFIGURAÇÕES DO SUPABASE
+    const SUPABASE_URL = "SUA_URL_AQUI";
+    const SUPABASE_KEY = "SUA_ANON_KEY_AQUI";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function carregarDados() {
+        // Busca todas as vendas do banco
+        const { data, error } = await supabase
+            .from('vendas_doces')
+            .select('*')
+            .order('data_venda', { ascending: false });
+
+        if (error) {
+            console.error('Erro:', error);
+            return;
+        }
+
+        let faturamentoTotal = 0;
+        const tabelaBody = document.querySelector("#tabela-vendas tbody");
+        tabelaBody.innerHTML = "";
+
+        data.forEach(venda => {
+            faturamentoTotal += venda.valor_total;
+            
+            // Adiciona na tabela
+            const row = `<tr>
+                <td>${venda.cliente}</td>
+                <td>${venda.doce} (${venda.quantidade})</td>
+                <td>R$ ${venda.valor_total.toFixed(2)}</td>
+            </tr>`;
+            tabelaBody.innerHTML += row;
+        });
+
+        // Atualiza os indicadores de meta
+        document.getElementById("total-faturado").innerText = `R$ ${faturamentoTotal.toFixed(2)}`;
+        
+        const meta = 1000.00;
+        const percentual = Math.min((faturamentoTotal / meta) * 100, 100);
+        document.getElementById("barra").style.width = percentual + "%";
+        document.getElementById("porcentagem").innerText = percentual.toFixed(1) + "%";
+    }
+
+    carregarDados();
+</script>
+
+</body>
+</html>
