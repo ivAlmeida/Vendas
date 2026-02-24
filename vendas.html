@@ -2,53 +2,144 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Vendas - Doces do Ivan</title>
     <style>
-        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
-        h1 { color: #008f39; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background: #008f39; color: white; }
-        .total-destaque { font-size: 1.2em; font-weight: bold; color: #008f39; margin-top: 20px; text-align: right; }
+        :root {
+            --creme: #fffaf0;
+            --marrom-doce: #5d4037;
+            --rosa-pastel: #fce4ec;
+            --rosa-escuro: #d81b60;
+            --baunilha: #ffe0b2;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--creme);
+            color: var(--marrom-doce);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(93, 64, 55, 0.1);
+            border: 2px solid var(--baunilha);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--marrom-doce);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 3px solid var(--rosa-pastel);
+            padding-bottom: 10px;
+        }
+
+        .resumo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: var(--rosa-pastel);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        #lucro-total {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--rosa-escuro);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: var(--marrom-doce);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            border-radius: 5px 5px 0 0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--rosa-pastel);
+        }
+
+        tr:hover {
+            background-color: var(--creme);
+        }
+
+        .badge-doce {
+            background: var(--baunilha);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>📊 Relatório de Vendas</h1>
-        <div id="vendas-lista">Carregando...</div>
-        <div class="total-destaque" id="lucro-total">Total: R$ 0,00</div>
+        <h1>🍩 Relatório de Vendas</h1>
+        
+        <div class="resumo-header">
+            <span>Acompanhamento da Meta</span>
+            <div id="lucro-total">R$ 0,00</div>
+        </div>
+
+        <div id="tabela-container">
+            <p style="text-align: center;">Carregando pedidos...</p>
+        </div>
     </div>
 
     <script>
+        // Use as mesmas credenciais que funcionaram na planilha
         const URL = "https://ccoakkvpawzzwvryrxun.supabase.co/rest/v1/resumo_vendas?select=*";
-        const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjb2Fra3ZwYXd6end2cnlyeHVuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTc4ODkyNSwiZXhwIjoyMDg3MzY0OTI1fQ.BL0drxTfBPkNqwF75gMAkZtibBcwvV7g_B55-5ZCz14"; // Use a mesma Key do Mural
+        const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjb2Fra3ZwYXd6end2cnlyeHVuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTc4ODkyNSwiZXhwIjoyMDg3MzY0OTI1fQ.BL0drxTfBPkNqwF75gMAkZtibBcwvV7g_B55-5ZCz14";
 
         async function carregarVendas() {
-            const res = await fetch(URL, {
-                headers: { "apikey": KEY, "Authorization": `Bearer ${KEY}` }
-            });
-            const dados = await res.json();
-            
-            let html = '<table><tr><th>Data</th><th>Cliente</th><th>Doce</th><th>Qtd</th><th>Total</th></tr>';
-            let somaTotal = 0;
+            try {
+                const res = await fetch(URL, {
+                    headers: { "apikey": KEY, "Authorization": `Bearer ${KEY}` }
+                });
+                const vendas = await res.json();
+                
+                let html = '<table><tr><th>Data</th><th>Cliente (Local)</th><th>Doce</th><th>Qtd</th><th>Total</th></tr>';
+                let somaTotal = 0;
 
-            dados.forEach(v => {
-                const dataFormatada = new Date(v.data_venda).toLocaleDateString('pt-BR');
-                somaTotal += parseFloat(v.valor_total);
-                html += `<tr>
-                    <td>${dataFormatada}</td>
-                    <td>${v.nome_cliente} (${v.local})</td>
-                    <td>${v.nome_doce}</td>
-                    <td>${v.quantidade}</td>
-                    <td>R$ ${parseFloat(v.valor_total).toFixed(2)}</td>
-                </tr>`;
-            });
+                vendas.forEach(v => {
+                    const data = new Date(v.data_venda).toLocaleDateString('pt-BR');
+                    somaTotal += parseFloat(v.valor_total);
+                    
+                    html += `<tr>
+                        <td>${data}</td>
+                        <td><strong>${v.nome_cliente}</strong><br><small>${v.local}</small></td>
+                        <td><span class="badge-doce">${v.nome_doce}</span></td>
+                        <td>${v.quantidade}</td>
+                        <td style="font-weight:bold">R$ ${parseFloat(v.valor_total).toFixed(2)}</td>
+                    </tr>`;
+                });
 
-            html += '</table>';
-            document.getElementById('vendas-lista').innerHTML = html;
-            document.getElementById('lucro-total').innerHTML = `Faturamento Total: R$ ${somaTotal.toFixed(2)}`;
+                html += '</table>';
+                document.getElementById('tabela-container').innerHTML = html;
+                document.getElementById('lucro-total').innerHTML = `Faturamento: R$ ${somaTotal.toFixed(2)}`;
+                
+            } catch (err) {
+                document.getElementById('tabela-container').innerHTML = "Erro ao carregar dados.";
+            }
         }
+
         carregarVendas();
     </script>
 </body>
