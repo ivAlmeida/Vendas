@@ -90,26 +90,12 @@
 </head>
 <body>
 
-   <div class="container">
+    <div class="container">
         <h1>🍩 Relatório de Vendas</h1>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
-            <div style="background: var(--rosa-pastel); padding: 15px; border-radius: 10px; text-align: center;">
-                <small>Hoje</small>
-                <div id="venda-hoje" style="font-size: 1.2em; font-weight: bold;">R$ 0,00</div>
-            </div>
-            <div style="background: var(--baunilha); padding: 15px; border-radius: 10px; text-align: center;">
-                <small>Esta Semana</small>
-                <div id="venda-semana" style="font-size: 1.2em; font-weight: bold;">R$ 0,00</div>
-            </div>
-            <div style="background: var(--rosa-pastel); padding: 15px; border-radius: 10px; text-align: center;">
-                <small>Este Mês</small>
-                <div id="venda-mes" style="font-size: 1.2em; font-weight: bold;">R$ 0,00</div>
-            </div>
-            <div style="background: var(--marrom-doce); color: white; padding: 15px; border-radius: 10px; text-align: center;">
-                <small>Total Geral</small>
-                <div id="venda-total" style="font-size: 1.2em; font-weight: bold;">R$ 0,00</div>
-            </div>
+        <div class="resumo-header">
+            <span>Acompanhamento da Meta</span>
+            <div id="lucro-total">R$ 0,00</div>
         </div>
 
         <div id="tabela-container">
@@ -118,8 +104,9 @@
     </div>
 
     <script>
+        // Use as mesmas credenciais que funcionaram na planilha
         const URL = "https://ccoakkvpawzzwvryrxun.supabase.co/rest/v1/resumo_vendas?select=*";
-        const KEY = "SUA_KEY_AQUI"; 
+        const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjb2Fra3ZwYXd6end2cnlyeHVuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTc4ODkyNSwiZXhwIjoyMDg3MzY0OTI1fQ.BL0drxTfBPkNqwF75gMAkZtibBcwvV7g_B55-5ZCz14";
 
         async function carregarVendas() {
             try {
@@ -128,43 +115,32 @@
                 });
                 const vendas = await res.json();
                 
-                const agora = new Date();
-                const inicioDia = new Date(agora.setHours(0,0,0,0));
-                const inicioSemana = new Date(agora.setDate(agora.getDate() - agora.getDay()));
-                const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
-
-                let totais = { hoje: 0, semana: 0, mes: 0, geral: 0 };
-                let html = '<table><tr><th>Data</th><th>Cliente</th><th>Doce</th><th>Total</th></tr>';
+                let html = '<table><tr><th>Data</th><th>Cliente (Local)</th><th>Doce</th><th>Qtd</th><th>Total</th></tr>';
+                let somaTotal = 0;
 
                 vendas.forEach(v => {
-                    const dataVenda = new Date(v.data_venda);
-                    const valor = parseFloat(v.valor_total);
-
-                    // Lógica de Soma Temporal
-                    totais.geral += valor;
-                    if (dataVenda >= inicioDia) totais.hoje += valor;
-                    if (dataVenda >= inicioSemana) totais.semana += valor;
-                    if (dataVenda >= inicioMes) totais.mes += valor;
-
+                    const data = new Date(v.data_venda).toLocaleDateString('pt-BR');
+                    somaTotal += parseFloat(v.valor_total);
+                    
                     html += `<tr>
-                        <td>${dataVenda.toLocaleDateString('pt-BR')}</td>
-                        <td><strong>${v.nome_cliente}</strong></td>
+                        <td>${data}</td>
+                        <td><strong>${v.nome_cliente}</strong><br><small>${v.local}</small></td>
                         <td><span class="badge-doce">${v.nome_doce}</span></td>
-                        <td>R$ ${valor.toFixed(2)}</td>
+                        <td>${v.quantidade}</td>
+                        <td style="font-weight:bold">R$ ${parseFloat(v.valor_total).toFixed(2)}</td>
                     </tr>`;
                 });
 
-                document.getElementById('tabela-container').innerHTML = html + '</table>';
-                
-                // Atualiza os Cards
-                document.getElementById('venda-hoje').innerText = `R$ ${totais.hoje.toFixed(2)}`;
-                document.getElementById('venda-semana').innerText = `R$ ${totais.semana.toFixed(2)}`;
-                document.getElementById('venda-mes').innerText = `R$ ${totais.mes.toFixed(2)}`;
-                document.getElementById('venda-total').innerText = `R$ ${totais.geral.toFixed(2)}`;
+                html += '</table>';
+                document.getElementById('tabela-container').innerHTML = html;
+                document.getElementById('lucro-total').innerHTML = `Faturamento: R$ ${somaTotal.toFixed(2)}`;
                 
             } catch (err) {
                 document.getElementById('tabela-container').innerHTML = "Erro ao carregar dados.";
             }
         }
+
         carregarVendas();
     </script>
+</body>
+</html>
