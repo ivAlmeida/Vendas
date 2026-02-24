@@ -2,104 +2,54 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Vendas - Doces do Ivan</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Relatório de Vendas - Doces do Ivan</title>
     <style>
-        body { font-family: sans-serif; background: #f4f7f6; padding: 20px; color: #333; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; }
-        .card { background: #e8f4fd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .valor { font-size: 2em; font-weight: bold; color: #27ae60; }
-        
-        /* Barra de Meta */
-        .progress-container { background: #eee; border-radius: 20px; height: 30px; width: 100%; margin: 10px 0; overflow: hidden; }
-        .progress-bar { background: #27ae60; height: 100%; width: 0%; transition: width 1s ease-in-out; }
-        
-        .stats { display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; }
+        body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; }
+        h1 { color: #008f39; text-align: center; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f8f9fa; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #008f39; color: white; }
+        .total-destaque { font-size: 1.2em; font-weight: bold; color: #008f39; margin-top: 20px; text-align: right; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h1>Controle de Vendas 💰</h1>
-
-    <div class="card">
-        <p>Total Arrecadado</p>
-        <div id="total-faturado" class="valor">R$ 0,00</div>
-        
-        <p>Progresso da Meta (R$ 1.000,00)</p>
-        <div class="progress-container">
-            <div id="barra" class="progress-bar"></div>
-        </div>
-        <div class="stats">
-            <span id="porcentagem">0%</span>
-            <span>R$ 1.000,00</span>
-        </div>
+    <div class="container">
+        <h1>📊 Relatório de Vendas</h1>
+        <div id="vendas-lista">Carregando...</div>
+        <div class="total-destaque" id="lucro-total">Total: R$ 0,00</div>
     </div>
 
-    <h3>Últimas Vendas</h3>
-    <table id="tabela-vendas">
-        <thead>
-            <tr>
-                <th>Cliente</th>
-                <th>Doce</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            </tbody>
-    </table>
-</div>
+    <script>
+        const URL = "https://ccoakkvpawzzwvryrxun.supabase.co/rest/v1/resumo_vendas?select=*";
+        const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjb2Fra3ZwYXd6end2cnlyeHVuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTc4ODkyNSwiZXhwIjoyMDg3MzY0OTI1fQ.BL0drxTfBPkNqwF75gMAkZtibBcwvV7g_B55-5ZCz14"; // Use a mesma Key do Mural
 
-<script>
-    // 1. CONFIGURAÇÕES DO SUPABASE
-    const SUPABASE_URL = "SUA_URL_AQUI";
-    const SUPABASE_KEY = "SUA_ANON_KEY_AQUI";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    async function carregarDados() {
-        // Busca todas as vendas do banco
-        const { data, error } = await supabase
-            .from('vendas_doces')
-            .select('*')
-            .order('data_venda', { ascending: false });
-
-        if (error) {
-            console.error('Erro:', error);
-            return;
-        }
-
-        let faturamentoTotal = 0;
-        const tabelaBody = document.querySelector("#tabela-vendas tbody");
-        tabelaBody.innerHTML = "";
-
-        data.forEach(venda => {
-            faturamentoTotal += venda.valor_total;
+        async function carregarVendas() {
+            const res = await fetch(URL, {
+                headers: { "apikey": KEY, "Authorization": `Bearer ${KEY}` }
+            });
+            const dados = await res.json();
             
-            // Adiciona na tabela
-            const row = `<tr>
-                <td>${venda.cliente}</td>
-                <td>${venda.doce} (${venda.quantidade})</td>
-                <td>R$ ${venda.valor_total.toFixed(2)}</td>
-            </tr>`;
-            tabelaBody.innerHTML += row;
-        });
+            let html = '<table><tr><th>Data</th><th>Cliente</th><th>Doce</th><th>Qtd</th><th>Total</th></tr>';
+            let somaTotal = 0;
 
-        // Atualiza os indicadores de meta
-        document.getElementById("total-faturado").innerText = `R$ ${faturamentoTotal.toFixed(2)}`;
-        
-        const meta = 1000.00;
-        const percentual = Math.min((faturamentoTotal / meta) * 100, 100);
-        document.getElementById("barra").style.width = percentual + "%";
-        document.getElementById("porcentagem").innerText = percentual.toFixed(1) + "%";
-    }
+            dados.forEach(v => {
+                const dataFormatada = new Date(v.data_venda).toLocaleDateString('pt-BR');
+                somaTotal += parseFloat(v.valor_total);
+                html += `<tr>
+                    <td>${dataFormatada}</td>
+                    <td>${v.nome_cliente} (${v.local})</td>
+                    <td>${v.nome_doce}</td>
+                    <td>${v.quantidade}</td>
+                    <td>R$ ${parseFloat(v.valor_total).toFixed(2)}</td>
+                </tr>`;
+            });
 
-    carregarDados();
-</script>
-
+            html += '</table>';
+            document.getElementById('vendas-lista').innerHTML = html;
+            document.getElementById('lucro-total').innerHTML = `Faturamento Total: R$ ${somaTotal.toFixed(2)}`;
+        }
+        carregarVendas();
+    </script>
 </body>
 </html>
