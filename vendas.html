@@ -41,7 +41,6 @@
             margin-bottom: 30px;
         }
 
-        /* GRID DE CARDS */
         .cards-grid {
             display: grid; 
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
@@ -54,11 +53,6 @@
             border-radius: 12px;
             text-align: center;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
-        }
-
-        .card-resumo:hover {
-            transform: scale(1.03);
         }
 
         .card-resumo small {
@@ -72,11 +66,6 @@
         .valor-card {
             font-size: 1.4em;
             font-weight: bold;
-        }
-
-        /* TABELA */
-        #tabela-container {
-            overflow-x: auto;
         }
 
         table {
@@ -136,7 +125,6 @@
     </div>
 
     <script>
-        //   // Use as mesmas credenciais que funcionaram na planilha
         const URL = "https://ccoakkvpawzzwvryrxun.supabase.co/rest/v1/resumo_vendas?select=*";
         const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjb2Fra3ZwYXd6end2cnlyeHVuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTc4ODkyNSwiZXhwIjoyMDg3MzY0OTI1fQ.BL0drxTfBPkNqwF75gMAkZtibBcwvV7g_B55-5ZCz14";
 
@@ -147,32 +135,50 @@
                 });
                 const vendas = await res.json();
                 
-                let html = '<table><tr><th>Data</th><th>Cliente (Local)</th><th>Doce</th><th>Qtd</th><th>Total</th></tr>';
-                let somaTotal = 0;
+                // Matemática das Datas
+                const agora = new Date();
+                const hojeStr = agora.toLocaleDateString('pt-BR');
+                
+                const inicioSemana = new Date(agora);
+                inicioSemana.setDate(agora.getDate() - agora.getDay());
+                inicioSemana.setHours(0,0,0,0);
+
+                const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+
+                let totais = { hoje: 0, semana: 0, mes: 0, geral: 0 };
+                let html = '<table><tr><th>Data</th><th>Cliente</th><th>Doce</th><th>Total</th></tr>';
 
                 vendas.forEach(v => {
-                    const data = new Date(v.data_venda).toLocaleDateString('pt-BR');
-                    somaTotal += parseFloat(v.valor_total);
-                    
+                    const dataVenda = new Date(v.data_venda);
+                    const valor = parseFloat(v.valor_total) || 0;
+                    const dataFormatada = dataVenda.toLocaleDateString('pt-BR');
+
+                    // Somas
+                    totais.geral += valor;
+                    if (dataFormatada === hojeStr) totais.hoje += valor;
+                    if (dataVenda >= inicioSemana) totais.semana += valor;
+                    if (dataVenda >= inicioMes) totais.mes += valor;
+
                     html += `<tr>
-                        <td>${data}</td>
+                        <td>${dataFormatada}</td>
                         <td><strong>${v.nome_cliente}</strong><br><small>${v.local}</small></td>
                         <td><span class="badge-doce">${v.nome_doce}</span></td>
-                        <td>${v.quantidade}</td>
-                        <td style="font-weight:bold">R$ ${parseFloat(v.valor_total).toFixed(2)}</td>
+                        <td style="font-weight:bold">R$ ${valor.toFixed(2)}</td>
                     </tr>`;
                 });
 
-                html += '</table>';
-                document.getElementById('tabela-container').innerHTML = html;
-                document.getElementById('lucro-total').innerHTML = `Faturamento: R$ ${somaTotal.toFixed(2)}`;
+                document.getElementById('tabela-container').innerHTML = html + '</table>';
+                document.getElementById('venda-hoje').innerText = `R$ ${totais.hoje.toFixed(2)}`;
+                document.getElementById('venda-semana').innerText = `R$ ${totais.semana.toFixed(2)}`;
+                document.getElementById('venda-mes').innerText = `R$ ${totais.mes.toFixed(2)}`;
+                document.getElementById('venda-total').innerText = `R$ ${totais.geral.toFixed(2)}`;
                 
             } catch (err) {
-                document.getElementById('tabela-container').innerHTML = "Erro ao carregar dados.";
+                document.getElementById('tabela-container').innerHTML = "<p style='color:red; text-align:center;'>Erro ao conectar com o banco de dados.</p>";
             }
         }
 
-        carregarVendas(); Use o script de carregamento de vendas aqui embaixo
+        carregarVendas();
     </script>
 </body>
 </html>
