@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Vendas - Doces do Ivan</title>
+    <title>Dashboard de Vendas - Doces do Ivan</title>
     <style>
         :root {
             --creme: #fffaf0;
@@ -11,6 +11,7 @@
             --rosa-pastel: #fce4ec;
             --rosa-escuro: #d81b60;
             --baunilha: #ffe0b2;
+            --branco: #ffffff;
         }
 
         body {
@@ -24,7 +25,7 @@
         .container {
             max-width: 1000px;
             margin: auto;
-            background: white;
+            background: var(--branco);
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 10px 25px rgba(93, 64, 55, 0.1);
@@ -33,33 +34,55 @@
 
         h1 {
             text-align: center;
-            color: var(--marrom-doce);
             text-transform: uppercase;
             letter-spacing: 2px;
             border-bottom: 3px solid var(--rosa-pastel);
             padding-bottom: 10px;
+            margin-bottom: 30px;
         }
 
-        .resumo-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            background: var(--rosa-pastel);
-            padding: 15px;
-            border-radius: 10px;
+        /* GRID DE CARDS */
+        .cards-grid {
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 15px; 
+            margin-bottom: 30px;
         }
 
-        #lucro-total {
-            font-size: 1.5em;
+        .card-resumo {
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .card-resumo:hover {
+            transform: scale(1.03);
+        }
+
+        .card-resumo small {
+            text-transform: uppercase;
             font-weight: bold;
-            color: var(--rosa-escuro);
+            font-size: 0.75em;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .valor-card {
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        /* TABELA */
+        #tabela-container {
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            background: white;
         }
 
         th {
@@ -67,7 +90,6 @@
             color: white;
             padding: 15px;
             text-align: left;
-            border-radius: 5px 5px 0 0;
         }
 
         td {
@@ -75,15 +97,11 @@
             border-bottom: 1px solid var(--rosa-pastel);
         }
 
-        tr:hover {
-            background-color: var(--creme);
-        }
-
         .badge-doce {
             background: var(--baunilha);
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.85em;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
             font-weight: bold;
         }
     </style>
@@ -91,20 +109,34 @@
 <body>
 
     <div class="container">
-        <h1>🍩 Relatório de Vendas</h1>
+        <h1>🍩 Painel de Vendas</h1>
         
-        <div class="resumo-header">
-            <span>Acompanhamento da Meta</span>
-            <div id="lucro-total">R$ 0,00</div>
+        <div class="cards-grid">
+            <div class="card-resumo" style="background-color: var(--rosa-pastel);">
+                <small>Hoje</small>
+                <div id="venda-hoje" class="valor-card">R$ 0,00</div>
+            </div>
+            <div class="card-resumo" style="background-color: var(--baunilha);">
+                <small>Esta Semana</small>
+                <div id="venda-semana" class="valor-card">R$ 0,00</div>
+            </div>
+            <div class="card-resumo" style="background-color: var(--rosa-pastel);">
+                <small>Este Mês</small>
+                <div id="venda-mes" class="valor-card">R$ 0,00</div>
+            </div>
+            <div class="card-resumo" style="background-color: var(--marrom-doce); color: white;">
+                <small>Acumulado Geral</small>
+                <div id="venda-total" class="valor-card">R$ 0,00</div>
+            </div>
         </div>
 
         <div id="tabela-container">
-            <p style="text-align: center;">Carregando pedidos...</p>
+            <p style="text-align: center;">Carregando informações do banco...</p>
         </div>
     </div>
 
     <script>
-        // Use as mesmas credenciais que funcionaram na planilha
+        //   // Use as mesmas credenciais que funcionaram na planilha
         const URL = "https://ccoakkvpawzzwvryrxun.supabase.co/rest/v1/resumo_vendas?select=*";
         const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjb2Fra3ZwYXd6end2cnlyeHVuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTc4ODkyNSwiZXhwIjoyMDg3MzY0OTI1fQ.BL0drxTfBPkNqwF75gMAkZtibBcwvV7g_B55-5ZCz14";
 
@@ -140,7 +172,7 @@
             }
         }
 
-        carregarVendas();
+        carregarVendas(); Use o script de carregamento de vendas aqui embaixo
     </script>
 </body>
 </html>
